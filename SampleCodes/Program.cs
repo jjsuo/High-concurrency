@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using SampleCodes.Cache;
 using SampleCodes.Cache.RealKVCacheVisitServices;
 using SampleCodes.Cache.RealKVCacheVisitServices.KVCacheVersionServices;
 using SampleCodes.Thread;
+using SampleCodes.Collections;
 
 namespace SampleCodes
 {
@@ -13,21 +15,42 @@ namespace SampleCodes
         async static Task Main(string[] args)
         {
 
-            
 
 
+            AsyncInteration<string> asyncInteration = new AsyncInteration<string>(
+                async (index) =>
+                {
+                    if (index <= 3)
+                    {
+                        //模拟数据源
+                        return await Task.FromResult(new List<string>() { Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), "A", Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString() });
+                    }
 
+                    return null;
+                }
+                );
+
+            await ParallelHelper.ForEach(asyncInteration, 3, async (data) =>
+            {
+                //模拟耗时操作
+                await Task.Delay(300);
+                /*if (data == "A")
+                {
+                    throw new Exception("A");
+                }*/
+                Console.WriteLine(data);
+            });
 
 
             //初始化
-            Init();
+            //Init();
 
 
-            await LocalTimeout();
+            //await LocalTimeout();
 
-            await LocalVersion();
+            //await LocalVersion();
 
-            await Combination();
+            //await Combination();
 
         }
 
