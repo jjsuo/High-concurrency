@@ -7,6 +7,7 @@ using SampleCodes.Cache.RealKVCacheVisitServices;
 using SampleCodes.Cache.RealKVCacheVisitServices.KVCacheVersionServices;
 using SampleCodes.Thread;
 using SampleCodes.Collections;
+using System.Diagnostics.Tracing;
 
 namespace SampleCodes
 {
@@ -30,16 +31,56 @@ namespace SampleCodes
                 }
                 );
 
-            await ParallelHelper.ForEach(asyncInteration, 3, async (data) =>
+
+            var pollingResult= await PollingHelper.Polling<string>(
+                async()=>
+                {
+                    return await Task.FromResult(
+                    new AsyncInteration<string>(
+                        async (index) =>
+                        {
+                            if (index <= 3)
+                            {
+                                //模拟数据源
+                                return await Task.FromResult(new List<string>() { Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), "A", Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString() });
+                            }
+
+                            return null;
+                        }
+                        )
+                    );
+                },3,1000,
+                async (data) =>
+                {
+                    //模拟耗时操作
+                    await Task.Delay(100);
+
+                    Console.WriteLine(data);
+                }
+                ,
+                async(ex)=>
+                {
+                    Console.WriteLine(ex.ToString());
+                    await Task.CompletedTask;
+                }
+                );
+
+
+            
+            //10秒后，关闭轮询
+            await Task.Delay(10000);
+            await pollingResult.Stop();
+
+
+            Console.ReadLine();
+            /*await ParallelHelper.ForEach(asyncInteration, 3, async (data) =>
             {
                 //模拟耗时操作
                 await Task.Delay(300);
-                /*if (data == "A")
-                {
-                    throw new Exception("A");
-                }*/
-                Console.WriteLine(data);
-            });
+
+            Console.WriteLine(data);
+        });*/
+
 
 
             //初始化
