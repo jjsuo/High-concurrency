@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SampleCodes.Thread
@@ -19,6 +20,8 @@ namespace SampleCodes.Thread
         {
             var sourceEnumerator = source.GetAsyncEnumerator();
 
+            SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+
             List<Task> tasks = new List<Task>();
 
             for (var index = 0; index <= maxDegree - 1; index++)
@@ -28,14 +31,25 @@ namespace SampleCodes.Thread
                     {
                         while (true)
                         {
-                            if (await sourceEnumerator.MoveNextAsync())
+                            T data = default(T);
+                            await _lock.WaitAsync();
+                            try
                             {
-                                await body(sourceEnumerator.Current);
+                                if (await sourceEnumerator.MoveNextAsync())
+                                {
+                                    data = sourceEnumerator.Current;
+                                }
+                                else
+                                {
+                                    break;
+                                }
                             }
-                            else
+                            finally
                             {
-                                break;
+                                _lock.Release();
                             }
+
+                            await body(sourceEnumerator.Current);
                         }
                     })
                     );
