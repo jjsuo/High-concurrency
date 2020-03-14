@@ -49,7 +49,7 @@ namespace SampleCodes.Thread
                                 _lock.Release();
                             }
 
-                            await body(sourceEnumerator.Current);
+                            await body(data);
                         }
                     })
                     );
